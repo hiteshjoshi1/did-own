@@ -18,10 +18,14 @@ contract("EthereumDIDRegistry", function(accounts) {
   const hex = web3.utils.asciiToHex("attestor");
   const hextoBytes32 = web3.utils.hexToBytes(hex);
 
-  const someKeyHex = web3.utils.asciiToHex("someKey");
+  const someKey = "someKey";
+
+  const someValue = "abcdef";
+
+  const someKeyHex = web3.utils.asciiToHex(someKey);
   const someKeyBytes = web3.utils.hexToBytes(someKeyHex);
 
-  const valueHex = web3.utils.asciiToHex("mykey");
+  const valueHex = web3.utils.asciiToHex(someValue);
   const valueInBytes = web3.utils.hexToBytes(valueHex);
 
   const privateKey = Buffer.from(
@@ -548,8 +552,8 @@ contract("EthereumDIDRegistry", function(accounts) {
           const event = tx.logs[0];
           assert.equal(event.event, "DIDAttributeChanged");
           assert.equal(event.args.identity, identity);
-          assert.equal(bytes32ToString(event.args.name), "someKey");
-          assert.equal(event.args.value, "0x6d796b6579");
+          assert.equal(bytes32ToString(event.args.name), someKey);
+          assert.equal(event.args.value, valueHex);
           assert.equal(event.args.validTo.toNumber(), block.timestamp + 86400);
           assert.equal(
             event.args.previousChange.toNumber(),
@@ -592,8 +596,8 @@ contract("EthereumDIDRegistry", function(accounts) {
             signerAddress2,
             privateKey2,
             Buffer.from("setAttribute").toString("hex") +
-              stringToBytes32("someKey") +
-              Buffer.from("mykey").toString("hex") +
+              stringToBytes32(someKey) +
+              Buffer.from(someValue).toString("hex") +
               leftPad(new BN(86400).toString(16))
           );
           tx = await didReg.setAttributeSigned(
@@ -619,8 +623,8 @@ contract("EthereumDIDRegistry", function(accounts) {
             event.args.identity.toUpperCase(),
             signerAddress.toUpperCase()
           );
-          assert.equal(bytes32ToString(event.args.name), "someKey");
-          assert.equal(event.args.value, "0x6d796b6579");
+          assert.equal(bytes32ToString(event.args.name), someKey);
+          assert.equal(event.args.value, valueHex);
           assert.equal(event.args.validTo.toNumber(), block.timestamp + 86400);
           assert.equal(
             event.args.previousChange.toNumber(),
@@ -654,8 +658,8 @@ contract("EthereumDIDRegistry", function(accounts) {
           const event = tx.logs[0];
           assert.equal(event.event, "DIDAttributeChanged");
           assert.equal(event.args.identity, identity);
-          assert.equal(bytes32ToString(event.args.name), "someKey");
-          assert.equal(event.args.value, "0x6d796b6579");
+          assert.equal(bytes32ToString(event.args.name), someKey);
+          assert.equal(event.args.value, valueHex);
           assert.equal(event.args.validTo.toNumber(), 0);
           assert.equal(
             event.args.previousChange.toNumber(),
@@ -694,8 +698,8 @@ contract("EthereumDIDRegistry", function(accounts) {
             signerAddress2,
             privateKey2,
             Buffer.from("revokeAttribute").toString("hex") +
-              stringToBytes32("someKey") +
-              Buffer.from("mykey").toString("hex")
+              stringToBytes32(someKey) +
+              Buffer.from(someValue).toString("hex")
           );
           tx = await didReg.revokeAttributeSigned(
             signerAddress,
@@ -719,8 +723,8 @@ contract("EthereumDIDRegistry", function(accounts) {
             event.args.identity.toUpperCase(),
             signerAddress.toUpperCase()
           );
-          assert.equal(bytes32ToString(event.args.name), "someKey");
-          assert.equal(event.args.value, "0x6d796b6579");
+          assert.equal(bytes32ToString(event.args.name), someKey);
+          assert.equal(event.args.value, valueHex);
           assert.equal(event.args.validTo.toNumber(), 0);
           assert.equal(
             event.args.previousChange.toNumber(),
