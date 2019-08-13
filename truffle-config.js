@@ -18,7 +18,7 @@
  *
  */
 
-// const HDWalletProvider = require('truffle-hdwallet-provider');
+const HDWalletProvider = require("truffle-hdwallet-provider");
 // const infuraKey = "fj4jll3k.....";
 //
 // const fs = require('fs');
@@ -46,6 +46,17 @@ module.exports = {
       host: "127.0.0.1", // Localhost (default: none)
       port: 8545, // Standard Ethereum port (default: none)
       network_id: "*" // Any network (default: none)
+    },
+    imda: {
+      provider: () => {
+        return new HDWalletProvider(
+          "A285AB66393C5FDDA46D6FBAD9E27FAFD438254AB72AD5ACB681A0E9F20F5D7B",
+          "https://a0mba30dmo:gIFt_G_vg71fU7zqH2y23pzfwPYa0ZnWlP1XyeZoqy4@a0lbgtgk4y-a0mmilap75-rpc.au0-aws.kaleido.io"
+        );
+      },
+      network_id: "*", // Match any network id
+      gasPrice: 0,
+      gas: 4500000
     }
 
     // Another network with more advanced options...

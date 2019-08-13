@@ -18,9 +18,9 @@ contract("EthereumDIDRegistry", function(accounts) {
   const hex = web3.utils.asciiToHex("attestor");
   const hextoBytes32 = web3.utils.hexToBytes(hex);
 
-  const someKey = "someKey";
+  const someKey = "dfdsfdsf";
 
-  const someValue = "abcdef";
+  const someValue = "dssfsfs";
 
   const someKeyHex = web3.utils.asciiToHex(someKey);
   const someKeyBytes = web3.utils.hexToBytes(someKeyHex);
@@ -84,15 +84,33 @@ contract("EthereumDIDRegistry", function(accounts) {
   }
 
   async function signData(identity, signer, key, data) {
+    // get the contract nonce - not the Blockchain nonce, replay attack prevention
     const nonce = await didReg.nonce(signer);
+    console.log(nonce);
+    console.log("Crime and Punishment");
+    console.log(Buffer.from([nonce], 64));
+    console.log("MOISTURE");
+    console.log(Buffer.from(nonce, 64));
+    // padding it to make 64 bytes ???? and convert to hex
+
     const paddedNonce = leftPad(Buffer.from([nonce], 64).toString("hex"));
+
+    // Buffer.from("setAttribute").toString("hex") +
+    //       stringToBytes32(someKey) +
+    //       Buffer.from(someValue).toString("hex") +
+    //       leftPad(new BN(86400).toString(16))
+    //   )
+
     const dataToSign =
       "1900" +
       stripHexPrefix(didReg.address) +
       paddedNonce +
       stripHexPrefix(identity) +
       data;
+    console.log(dataToSign);
     const hash = Buffer.from(sha3.buffer(Buffer.from(dataToSign, "hex")));
+    console.log("----Hash.....");
+    console.log(hash);
     const signature = ethutil.ecsign(hash, key);
     const publicKey = ethutil.ecrecover(
       hash,
@@ -100,6 +118,7 @@ contract("EthereumDIDRegistry", function(accounts) {
       signature.r,
       signature.s
     );
+    console.log(publicKey);
     return {
       r: "0x" + signature.r.toString("hex"),
       s: "0x" + signature.s.toString("hex"),
@@ -110,8 +129,8 @@ contract("EthereumDIDRegistry", function(accounts) {
   describe("identityOwner()", () => {
     describe("default owner", () => {
       it("should return the identity address itself", async () => {
-        const owner = await didReg.identityOwner(identity2);
-        assert.equal(owner, identity2);
+        const owner = await didReg.identityOwner(signerAddress);
+        assert.equal(owner.toUpperCase(), signerAddress.toUpperCase());
       });
     });
 
@@ -192,7 +211,7 @@ contract("EthereumDIDRegistry", function(accounts) {
           } catch (error) {
             assert.equal(
               error.message,
-              "Returned error: VM Exception while processing transaction: revert"
+              "Returned error: VM Exception while processing transaction: revert actor is not owner -- Reason given: actor is not owner."
             );
           }
         });
@@ -209,7 +228,7 @@ contract("EthereumDIDRegistry", function(accounts) {
             console.log(error.message);
             assert.equal(
               error.message,
-              "Returned error: VM Exception while processing transaction: revert"
+              "Returned error: VM Exception while processing transaction: revert actor is not owner -- Reason given: actor is not owner."
             );
           }
         });
@@ -328,7 +347,7 @@ contract("EthereumDIDRegistry", function(accounts) {
           } catch (error) {
             assert.equal(
               error.message,
-              "Returned error: VM Exception while processing transaction: revert"
+              "Returned error: VM Exception while processing transaction: revert actor is not owner -- Reason given: actor is not owner."
             );
           }
         });
@@ -463,7 +482,7 @@ contract("EthereumDIDRegistry", function(accounts) {
           } catch (error) {
             assert.equal(
               error.message,
-              "Returned error: VM Exception while processing transaction: revert"
+              "Returned error: VM Exception while processing transaction: revert actor is not owner -- Reason given: actor is not owner."
             );
           }
         });
@@ -576,7 +595,7 @@ contract("EthereumDIDRegistry", function(accounts) {
           } catch (error) {
             assert.equal(
               error.message,
-              "Returned error: VM Exception while processing transaction: revert"
+              "Returned error: VM Exception while processing transaction: revert actor is not owner -- Reason given: actor is not owner."
             );
           }
         });
@@ -587,11 +606,11 @@ contract("EthereumDIDRegistry", function(accounts) {
       describe("as current owner", () => {
         let tx;
         before(async () => {
-          previousChange = await didReg.changed(signerAddress);
-          const curOwner = await didReg.identityOwner(signerAddress);
+          previousChange = await didReg.changed(signerAddress2);
+          const curOwner = await didReg.identityOwner(signerAddress2);
           assert.equal(signerAddress2.toUpperCase(), curOwner.toUpperCase());
           const sig = await signData(
-            signerAddress,
+            signerAddress2,
             // delegate4,
             signerAddress2,
             privateKey2,
@@ -600,23 +619,33 @@ contract("EthereumDIDRegistry", function(accounts) {
               Buffer.from(someValue).toString("hex") +
               leftPad(new BN(86400).toString(16))
           );
+          console.log("Hitesh picked attributes---------------------------");
+          console.log(signerAddress);
+          console.log(sig.v);
+          console.log(sig.r);
+          console.log(sig.s);
+          console.log(someKeyBytes);
+          console.log(valueInBytes);
+
           tx = await didReg.setAttributeSigned(
-            signerAddress,
+            signerAddress2,
             sig.v,
             sig.r,
             sig.s,
             someKeyBytes,
             valueInBytes,
             86400,
-            { from: delegate4 }
+            { from: signerAddress }
           );
+          console.log(tx);
           block = await getBlock(tx.receipt.blockNumber);
         });
         it("should sets changed to transaction block", async () => {
           const latest = await didReg.changed(signerAddress);
-          assert.equal(latest, tx.receipt.blockNumber);
+          const latestBN = web3.utils.toBN(latest).toString();
+          assert.equal(latestBN, tx.receipt.blockNumber);
         });
-        it("should create DIDDelegateChanged event", () => {
+        it("should create DIDAttributeChanged event", () => {
           const event = tx.logs[0];
           assert.equal(event.event, "DIDAttributeChanged");
           assert.equal(
@@ -681,7 +710,7 @@ contract("EthereumDIDRegistry", function(accounts) {
           } catch (error) {
             assert.equal(
               error.message,
-              "Returned error: VM Exception while processing transaction: revert"
+              "Returned error: VM Exception while processing transaction: revert actor is not owner -- Reason given: actor is not owner."
             );
           }
         });
