@@ -2,6 +2,7 @@ var ethutil = require("ethereumjs-util");
 var sha3 = require("js-sha3").keccak_256;
 var EthereumDIDRegistry = artifacts.require("./EthereumDIDRegistry.sol");
 var BN = require("bn.js");
+var ethers = require("ethers");
 
 contract("EthereumDIDRegistry", function(accounts) {
   let didReg;
@@ -31,7 +32,7 @@ contract("EthereumDIDRegistry", function(accounts) {
   const hex = web3.utils.asciiToHex("attestor");
   const hextoBytes32 = web3.utils.hexToBytes(hex);
 
-  const someKey = "name";
+  const someKey = "D/E Card IMM27";
 
   const someValue = "Hitesh";
 
@@ -39,9 +40,13 @@ contract("EthereumDIDRegistry", function(accounts) {
   const someKeyBytes = web3.utils.hexToBytes(someKeyHex);
 
   const valueHex = web3.utils.asciiToHex(someValue);
+  //   let valueHexEther = ethers.utils.hexlify(ethers.utils.toUtf8Bytes(someValue));
   const valueInBytes = web3.utils.hexToBytes(valueHex);
 
-  // console.log({identity,identity2, delegate, delegate2, badboy})
+  //   let someKeyEtherBytes = ethers.utils.formatBytes32String(someKey);
+
+  //   let etherBytes = ethers.utils.toUtf8Bytes(someValue);
+
   before(async () => {
     didReg = await EthereumDIDRegistry.deployed();
   });
@@ -87,22 +92,14 @@ contract("EthereumDIDRegistry", function(accounts) {
   async function signData(identity, signer, key, data) {
     // get the contract nonce - not the Blockchain nonce, replay attack prevention
     const nonce = await didReg.nonce(signer);
-    console.log(nonce);
-    console.log(Buffer.from([nonce], 64));
-    console.log(Buffer.from(nonce, 64));
-    // padding it to make 64 bytes ???? and convert to hex
-
     const paddedNonce = leftPad(Buffer.from([nonce], 64).toString("hex"));
-
     const dataToSign =
       "1900" +
       stripHexPrefix(didReg.address) +
       paddedNonce +
       stripHexPrefix(identity) +
       data;
-    console.log(dataToSign);
     const hash = Buffer.from(sha3.buffer(Buffer.from(dataToSign, "hex")));
-    console.log(hash);
     const signature = ethutil.ecsign(hash, key);
     const publicKey = ethutil.ecrecover(
       hash,
@@ -110,7 +107,6 @@ contract("EthereumDIDRegistry", function(accounts) {
       signature.r,
       signature.s
     );
-    console.log(publicKey);
     return {
       r: "0x" + signature.r.toString("hex"),
       s: "0x" + signature.s.toString("hex"),
@@ -135,27 +131,27 @@ contract("EthereumDIDRegistry", function(accounts) {
           assert.equal(signerAddress2.toUpperCase(), curOwner.toUpperCase()); // so the address itself is owner by default
           const sig = await signData(
             signerAddress2, // is the identity did address
-            signerAddress2, // who is signing
+            signerAddress2, // who is signing and current owner
             privateKey2, // signing addres pvt key
             Buffer.from("setAttribute").toString("hex") + // which method to call
             stringToBytes32(someKey) + //the attribute Name
             Buffer.from(someValue).toString("hex") + // the attribute value
               leftPad(new BN(86400).toString(16)) // the attribute validity
           );
-          console.log(signerAddress);
+          console.log(signerAddress2);
           console.log(sig.v);
           console.log(sig.r);
           console.log(sig.s);
-          console.log(someKeyBytes);
-          console.log(valueInBytes);
+          console.log(someKey);
+          console.log(someValue);
 
           tx = await didReg.setAttributeSigned(
             signerAddress2,
             sig.v,
             sig.r,
             sig.s,
-            someKeyBytes,
-            valueInBytes,
+            someKeyHex,
+            valueHex,
             86400,
             { from: signerAddress }
           );

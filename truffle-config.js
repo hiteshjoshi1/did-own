@@ -50,8 +50,8 @@ module.exports = {
     imda: {
       provider: () => {
         return new HDWalletProvider(
-          "A285AB66393C5FDDA46D6FBAD9E27FAFD438254AB72AD5ACB681A0E9F20F5D7B",
-          "https://a0mba30dmo:gIFt_G_vg71fU7zqH2y23pzfwPYa0ZnWlP1XyeZoqy4@a0lbgtgk4y-a0mmilap75-rpc.au0-aws.kaleido.io"
+          process.env.PRIVATE_KEY,
+          process.env.NODE_ADDRESS
         );
       },
       network_id: "*", // Match any network id
